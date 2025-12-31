@@ -180,7 +180,45 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   const indentChars = indentWithTabs ? '\t' : new Array((indentSize || TAB_SIZE) + 1).join(' ');
   const extraKeys = {
     'Ctrl-Q': (cm: CodeMirror.Editor) => cm.foldCode(cm.getCursor()),
-    [isMac() ? 'Cmd-/' : 'Ctrl-/']: 'toggleComment',
+    [isMac() ? 'Cmd-/' : 'Ctrl-/']: (cm: CodeMirror.Editor) => {
+      const modeObj = cm.getMode();
+      // For modes without native comment support (like JSON wrapped in nunjucks), manually toggle // comments
+      if (!modeObj.lineComment && !modeObj.blockCommentStart) {
+        const from = cm.getCursor('from');
+        const to = cm.getCursor('to');
+        const startLine = from.line;
+        const endLine = to.line;
+        // Check if all lines are already commented
+        let allCommented = true;
+        for (let i = startLine; i <= endLine; i++) {
+          const lineText = cm.getLine(i);
+          if (!lineText.trimStart().startsWith('//')) {
+            allCommented = false;
+            break;
+          }
+        }
+        // Toggle comments
+        cm.operation(() => {
+          for (let i = startLine; i <= endLine; i++) {
+            const lineText = cm.getLine(i);
+            if (allCommented) {
+              // Uncomment: remove first occurrence of //
+              const commentIndex = lineText.indexOf('//');
+              if (commentIndex !== -1) {
+                const removeLength = lineText[commentIndex + 2] === ' ' ? 3 : 2;
+                cm.replaceRange('', { line: i, ch: commentIndex }, { line: i, ch: commentIndex + removeLength });
+              }
+            } else {
+              // Comment: add // at start of line (after leading whitespace)
+              const leadingWhitespace = lineText.match(/^(\s*)/)?.[1] || '';
+              cm.replaceRange('// ', { line: i, ch: leadingWhitespace.length }, { line: i, ch: leadingWhitespace.length });
+            }
+          }
+        });
+      } else {
+        cm.execCommand('toggleComment');
+      }
+    },
     // Autocomplete
     'Ctrl-Space': 'autocomplete',
     // Change default find command from "find" to "findPersistent" so the
