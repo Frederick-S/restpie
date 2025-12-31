@@ -12,8 +12,9 @@ import { WebSocketRequest } from '../models/websocket-request';
 import { isWorkspace, Workspace } from '../models/workspace';
 import * as templating from '../templating';
 import * as templatingUtils from '../templating/utils';
+import { stripCommentsFromBody, stripGraphQLComments } from '../utils/strip-comments';
 import { setDefaultProtocol } from '../utils/url/protocol';
-import { CONTENT_TYPE_GRAPHQL, JSON_ORDER_SEPARATOR } from './constants';
+import { CONTENT_TYPE_GRAPHQL, getContentTypeFromHeaders, JSON_ORDER_SEPARATOR } from './constants';
 import { database as db } from './database';
 
 export const KEEP_ON_ERROR = 'keep';
@@ -474,12 +475,23 @@ export async function getRenderedRequestAndContext(
   const cookieJar = await models.cookieJar.getOrCreateForParentId(parentId);
   const renderContext = await getRenderContext({ request, environmentId, ancestors, purpose, extraInfo });
 
-  // HACK: Switch '#}' to '# }' to prevent Nunjucks from barfing
+  // Strip comments from body text before rendering (for formats that don't natively support comments)
+  if (request.body.text) {
+    const contentType = request.body.mimeType || getContentTypeFromHeaders(request.headers);
+    request.body.text = stripCommentsFromBody(request.body.text, contentType);
+  }
+
+  // Handle GraphQL: strip # comments from query field and fix Nunjucks issue
   // https://github.com/ArchGPT/insomnium/issues/895
   try {
     if (request.body.text && request.body.mimeType === CONTENT_TYPE_GRAPHQL) {
       const o = JSON.parse(request.body.text);
-      o.query = o.query.replace(/#}/g, '# }');
+      // Strip # comments from the GraphQL query
+      if (o.query) {
+        o.query = stripGraphQLComments(o.query);
+        // HACK: Switch '#}' to '# }' to prevent Nunjucks from barfing (for any remaining # in strings)
+        o.query = o.query.replace(/#}/g, '# }');
+      }
       request.body.text = JSON.stringify(o);
     }
   } catch (err) { }
