@@ -1,81 +1,63 @@
-const sidebarBackground = {
-  default: '#2C2C2C',
-  success: '#7ecf2b',
-  notice: '#f0e137',
-  warning: '#ff9a1f',
-  danger: '#ff5631',
-  surprise: '#a896ff',
-  info: '#46c1e6',
+const background = {
+  success: '#3d9c62',
+  notice: '#bb9700',
+  warning: '#d6803e',
+  danger: '#da5b56',
+  info: '#003052',
+  surprise: '#6030BF',
 };
 
 export default {
   name: 'default',
   displayName: 'Default',
   theme: {
-    background: sidebarBackground,
     foreground: {
-      default: '#ddd',
+      default: '#555',
     },
+    background,
     styles: {
-      transparentOverlay: {
+      appHeader: {
         background: {
-          default: 'rgba(30, 30, 30, 0.8)',
+          default: '#f7fafc',
         },
+      },
+      link: {
         foreground: {
-          default: '#ddd',
+          default: '#68a9a2',
+        },
+      },
+      editor: {
+        background: {
+          surprise: background.info,
+          info: background.surprise,
         },
       },
       dialog: {
         background: {
-          default: '#2a2a2a',
-        },
-      },
-      appHeader: {
-        background: {
-          default: '#2C2C2C',
+          info: '#005B9E',
         },
       },
       sidebar: {
-        background: sidebarBackground,
-        foreground: {
-          default: '#e0e0e0',
-        },
-        highlight: {
-          default: '#999',
-        },
-      },
-      sidebarHeader: {
         background: {
-          default: '#695eb8',
+          default: '#f7fafc',
+          success: '#50a14f',
+          notice: '#c18401',
+          warning: '#c18401',
+          danger: '#e45649',
+          surprise: '#6030BF',
+          info: '#0184bc',
         },
         foreground: {
-          default: '#fff',
+          default: '#444',
         },
+        highlight: {},
       },
-      paneHeader: {
-        foreground: {
-          default: '#ccc',
-        },
+      transparentOverlay: {
         background: {
-          default: '#212121',
-          success: '#75ba24',
-          notice: '#d8c84d',
-          warning: '#ec8702',
-          danger: '#e15251',
-          surprise: '#8776d5',
-          info: '#20aed9',
-        },
-      },
-      pane: {
-        background: {
-          ...sidebarBackground,
-          default: '#292929',
+          default: 'rgba(230,240,250,0.8)',
         },
         foreground: {
-          default: '#e0e0e0',
-        },
-        highlight: {
-          default: '#999',
+          default: '#555',
         },
       },
     },
