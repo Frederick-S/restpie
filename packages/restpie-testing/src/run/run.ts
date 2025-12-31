@@ -27,7 +27,7 @@ const runInternal = async <TReturn, TNetworkResponse>(
 
   const mocha: Mocha = new Mocha({
     //       ms   * sec * min
-    timeout: 1000 * 60  * 1,
+    timeout: 1000 * 60 * 1,
     globals: ['insomnia', 'chai'],
     bail,
     reporter,
@@ -72,7 +72,7 @@ const runInternal = async <TReturn, TNetworkResponse>(
  * Copy test to tmp dir and return the file path
  */
 const writeTempFile = (sourceCode: string) => {
-  const root = join(tmpdir(), 'insomnia-testing');
+  const root = join(tmpdir(), 'restpie-testing');
   fs.mkdirSync(root, { recursive: true });
 
   const path = join(root, `${Math.random()}-test.ts`);
