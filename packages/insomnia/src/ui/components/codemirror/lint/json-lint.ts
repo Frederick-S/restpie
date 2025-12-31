@@ -1,5 +1,6 @@
 // This linter override allows Nunjuck templates to be rendered before attempting
 // the linting process to ensure accurate parsing of values is completed.
+// It also strips // comments before linting since we support comment toggling in the editor.
 // It still uses under the hood the jsonlint-mod-fixed library found at
 // https://github.com/circlecell/jsonlint-mod/blob/master/lib/jsonlint.js
 
@@ -9,6 +10,7 @@ import CodeMirror from 'codemirror';
 import * as jsonlint from 'jsonlint-mod-fixed';
 
 import { render } from '../../../../../../insomnia/src/templating/index';
+import { stripCommentsFromBody } from '../../../../utils/strip-comments';
 CodeMirror.registerHelper('lint', 'json', validator);
 
 interface ValidationError {
@@ -38,12 +40,15 @@ async function validator(text: string): Promise<ValidationError[]> {
     }
   };
 
+  // Strip // comments before validating (we support comment toggling in the editor)
+  const textWithoutComments = stripCommentsFromBody(text, 'application/json');
+
   // Render any Nunjucks templates before attempting to parse
-  const renderedText: string | null = await render(text, {});
+  const renderedText: string | null = await render(textWithoutComments, {});
   if (renderedText) {
     try {
       jsonlint.parse(renderedText);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return found;
