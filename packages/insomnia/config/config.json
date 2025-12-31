@@ -8,7 +8,7 @@
   "changelogUrl": "https://github.com/ArchGPT/insomnium/releases",
   "theme": "default",
   "lightTheme": "studio-light",
-  "darkTheme": "default",
+  "darkTheme": "dark",
   "githubOrg": "ArchGPT",
   "githubRepo": "insomnium"
 }
