@@ -1,6 +1,6 @@
-# RestPie API Client
+# RestPie API Client (WIP)
 
-*\<currently not being actively maintained>*
+A fork of [Insomnium](https://github.com/ArchGPT/insomnium), mainly for personal use.
  
 RestPie is a 100% local and privacy-focused open-source API client for testing GraphQL, REST, WebSockets, Server-sent events and gRPC in development/production.
 
