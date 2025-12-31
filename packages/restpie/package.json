@@ -1,6 +1,6 @@
 {
   "name": "restpie",
-  "version": "0.2.3-a",
+  "version": "0.0.1",
   "productName": "RestPie",
   "private": true,
   "description": "The Collaborative API Design Tool",
