@@ -1,5 +1,5 @@
 import type { IRuleResult } from '@stoplight/spectral-core';
-import { generate, runTests, type Test } from 'insomnia-testing';
+import { generate, runTests, type Test } from 'restpie-testing';
 import path from 'path';
 import { ActionFunction, redirect } from 'react-router-dom';
 
@@ -942,7 +942,7 @@ const getCollectionItem = async (id: string) => {
 };
 
 export const reorderCollectionAction: ActionFunction = async ({ request, params }) => {
-  const { workspaceId }  = params;
+  const { workspaceId } = params;
   guard(typeof workspaceId === 'string', 'Workspace ID is required');
   const { id, targetId, dropPosition, metaSortKey } = await request.json();
   guard(typeof id === 'string', 'ID is required');

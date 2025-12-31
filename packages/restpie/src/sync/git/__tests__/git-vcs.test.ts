@@ -112,10 +112,10 @@ describe('Git-VCS', () => {
             },
             message: 'First commit!\n',
             parent: [],
-            tree: 'e2f917fbb2b671fd9a408124fde336a156f2b80c',
+            tree: '76cd55ffdaaf605351b3a76aa8a0cb5b1fe6b66c',
           },
-          oid: '42c57adff2f3204f5551348414e930a44c47c88b',
-          payload: `tree e2f917fbb2b671fd9a408124fde336a156f2b80c
+          oid: '35c94fc84d09085bbdb4e299630af24cdb47f054',
+          payload: `tree 76cd55ffdaaf605351b3a76aa8a0cb5b1fe6b66c
 author Karen Brown <karen@example.com> 1000000000 +0000
 committer Karen Brown <karen@example.com> 1000000000 +0000
 
