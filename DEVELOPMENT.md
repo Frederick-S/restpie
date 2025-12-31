@@ -4,14 +4,14 @@ The purpose of this document is to provide a general overview of the application
 
 ## Technologies
 
-Insomnium is a desktop application built on top of [Electron](http://electronjs.org/). Electron provides a Chromium runtime for the Insomnium web app to run inside, as well as additional tools to provide access to operating system features.
+RestPie is a desktop application built on top of [Electron](http://electronjs.org/). Electron provides a Chromium runtime for the RestPie web app to run inside, as well as additional tools to provide access to operating system features.
 
 There are a few more technologies and tools worth mentioning:
 
 - [`React`](https://reactjs.org/) is the library used for all UI components.
 - [`styled-components`](https://styled-components.com/) and [`Less`](http://lesscss.org/) are used for styling UI components.
-- [`Electron Builder`](https://github.com/electron-userland/electron-builder) is used to help build, sign, and package Insomnium for distribution.
-- [`libcurl`](https://curl.se/libcurl/) is the library that Insomnium uses to make requests. We used libcurl as our HTTP client of choice because it allows the deepest amount of debuggability and control of HTTP requests.
+- [`Electron Builder`](https://github.com/electron-userland/electron-builder) is used to help build, sign, and package RestPie for distribution.
+- [`libcurl`](https://curl.se/libcurl/) is the library that RestPie uses to make requests. We used libcurl as our HTTP client of choice because it allows the deepest amount of debuggability and control of HTTP requests.
 - [`NeDB`](https://github.com/louischatriot/nedb) a local in-memory database.
 - [`node-libcurl`](https://github.com/JCMais/node-libcurl) is a Node.js wrapper around the native libcurl library.
 - [`CodeMirror`](https://codemirror.net/) is a web-based, extendable, code editor used for highlighting and linting of data formats like JSON, GraphQL, and XML.
@@ -19,13 +19,13 @@ There are a few more technologies and tools worth mentioning:
 
 ## Project Structure
 
-Insomnium uses [`npm workspaces`](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true) to manage multiple npm packages within a single repository. There are currently the following package locations:
+RestPie uses [`npm workspaces`](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true) to manage multiple npm packages within a single repository. There are currently the following package locations:
 
-- `/packages` contains related packages that are consumed by `insomnia` or externally.
+- `/packages` contains related packages that are consumed by `restpie` or externally.
 
-## The `insomnia` Main Package
+## The `restpie` Main Package
 
-`/packages/insomnia` is the entry point for the app. All other packages are imported from this one.
+`/packages/restpie` is the entry point for the app. All other packages are imported from this one.
 
 There are a few notable directories inside it:
 
@@ -41,7 +41,7 @@ There are a few notable directories inside it:
 
 ## Data and State Architecture
 
-Insomnium stores data in a few places:
+RestPie stores data in a few places:
 
 - A local in-memory NeDB database stores data for data models (requests, folder, workspaces, etc.).
 - localstorage
@@ -60,11 +60,11 @@ Unit tests exist alongside the file under test. For example:
 
 Unit tests for components follow the same pattern.
 
-The structure for smoke tests is explained in the smoke testing package: [`packages/insomnia-smoke-test`](packages/insomnia-smoke-test).
+The structure for smoke tests is explained in the smoke testing package: [`packages/restpie-smoke-test`](packages/restpie-smoke-test).
 
 ## Technical Debt
 
-This is just a brief summary of Insomnium's current technical debt.
+This is just a brief summary of RestPie's current technical debt.
 
 - Loading large responses (~20 MB) can crash the app on weaker hardware.
 - Bundling `libcurl` (native module) has caused many weeks of headaches trying to get builds working across Windows, Mac, and Linux. More expertise here is definitely needed.
@@ -98,6 +98,6 @@ bump the following node and electron versions
 
 - `.npmrc`
 - `.nvmrc`
-- `packages/insomnia/package.json` electron and node-libcurl
-- `packages/insomnia-send-request/package.json` node-libcurl
+- `packages/restpie/package.json` electron and node-libcurl
+- `packages/restpie-send-request/package.json` node-libcurl
 - `shell.nix`

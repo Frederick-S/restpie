@@ -1,0 +1,14 @@
+{
+  "name": "restpie",
+  "appId": "com.restpie.app",
+  "userDataFolder": "RestPie",
+  "productName": "RestPie",
+  "synopsis": "The 100% local and privacy-focus API Client and Design Tool",
+  "icon": "https://github.com/archGPT/restpie/blob/main/packages/restpie/src/icons/icon.png?raw=true",
+  "changelogUrl": "https://github.com/ArchGPT/restpie/releases",
+  "theme": "default",
+  "lightTheme": "studio-light",
+  "darkTheme": "dark",
+  "githubOrg": "ArchGPT",
+  "githubRepo": "restpie"
+}
