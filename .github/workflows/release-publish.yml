@@ -46,8 +46,8 @@ jobs:
       # - name: Temporarily move Windows artifacts
       #   shell: bash
       #   run: |
-      #     mv ./artifacts/windows-latest-artifacts/squirrel-windows/Insomnium.Core-${{ env.RELEASE_VERSION }}.exe ./artifacts/
-      #     mv ./artifacts/windows-latest-artifacts/Insomnium.Core-${{ env.RELEASE_VERSION }}-portable.exe ./artifacts/
+      #     mv ./artifacts/windows-latest-artifacts/squirrel-windows/RestPie.Core-${{ env.RELEASE_VERSION }}.exe ./artifacts/
+      #     mv ./artifacts/windows-latest-artifacts/RestPie.Core-${{ env.RELEASE_VERSION }}-portable.exe ./artifacts/
 
       #### code sign windows when we hit 1.0
 
@@ -59,7 +59,7 @@ jobs:
       #     password: ${{secrets.ES_PASSWORD}}
       #     credential_id: ${{secrets.ES_CREDENTIAL_ID}}
       #     totp_secret: ${{secrets.ES_TOTP_SECRET}}
-      #     file_path: ${GITHUB_WORKSPACE}/artifacts/Insomnium.Core-${{ env.RELEASE_VERSION }}.exe
+      #     file_path: ${GITHUB_WORKSPACE}/artifacts/RestPie.Core-${{ env.RELEASE_VERSION }}.exe
       #     output_path: ${GITHUB_WORKSPACE}/artifacts/windows-latest-artifacts/insomnia/dist/squirrel-windows
 
       # - name: Code-sign Windows portable .exe artifact
@@ -70,7 +70,7 @@ jobs:
       #     password: ${{secrets.ES_PASSWORD}}
       #     credential_id: ${{secrets.ES_CREDENTIAL_ID}}
       #     totp_secret: ${{secrets.ES_TOTP_SECRET}}
-      #     file_path: ${GITHUB_WORKSPACE}/artifacts/Insomnium.Core-${{ env.RELEASE_VERSION }}-portable.exe
+      #     file_path: ${GITHUB_WORKSPACE}/artifacts/RestPie.Core-${{ env.RELEASE_VERSION }}-portable.exe
       #     output_path: ${GITHUB_WORKSPACE}/artifacts/windows-latest-artifacts/insomnia/dist
 
       # - name: Set Inso CLI version on Github Env
@@ -83,7 +83,7 @@ jobs:
         id: core_tag_and_release
         with:
           tag: ${{ env.RELEASE_CORE_TAG }}
-          name: "Insomnium ${{ env.RELEASE_VERSION }} 📦"
+          name: "RestPie ${{ env.RELEASE_VERSION }} 📦"
           body: "><> change-log coming in a few minutes.."
           commit: ${{ env.RELEASE_BRANCH }}
           prerelease: ${{ env.IS_PRERELEASE }}
@@ -102,7 +102,7 @@ jobs:
           prerelease: ${{ env.IS_PRERELEASE }}
           draft: false
 
-      # - name: Publish beta/stable of Insomnium to Insomnium API
+      # - name: Publish beta/stable of RestPie to RestPie API
       #   if: "!contains(github.event.inputs.version, 'alpha')"
       #   run: |
       #     curl \
@@ -119,7 +119,7 @@ jobs:
       #     RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
       #     RELEASE_CHANNEL: ${{ contains(github.event.inputs.version, 'beta') && 'beta' || 'stable' }}
 
-      # - name: Publish beta/stable of inso to Insomnium API
+      # - name: Publish beta/stable of inso to RestPie API
       #   if: "!contains(github.event.inputs.version, 'alpha')"
       #   run: |
       #     curl \
@@ -142,7 +142,7 @@ jobs:
       #   env:
       #     SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN_FILE }}
       #   with:
-      #     snap: artifacts/ubuntu-latest-artifacts/insomnia/dist/Insomnium.Core-${{ env.RELEASE_VERSION }}.snap
+      #     snap: artifacts/ubuntu-latest-artifacts/insomnia/dist/RestPie.Core-${{ env.RELEASE_VERSION }}.snap
       #     release: ${{ contains(github.event.inputs.version, 'beta') && 'beta' || 'stable' }}
 
       # - name: Upload .deb to pulp and/or cloudsmith (stable only)
@@ -161,7 +161,7 @@ jobs:
       #     entrypoint: /entrypoint.sh
       #     args: >
       #       release
-      #       --file artifacts/ubuntu-latest-artifacts/insomnia/dist/Insomnium.Core-${{ env.RELEASE_VERSION }}.deb
+      #       --file artifacts/ubuntu-latest-artifacts/insomnia/dist/RestPie.Core-${{ env.RELEASE_VERSION }}.deb
       #       --dist-name ubuntu
       #       --dist-version focal
       #       --package-type insomnia
@@ -192,7 +192,7 @@ jobs:
       #     curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.2.0" bash
 
       #     sentry-cli releases new ${{ env.RELEASE_VERSION }}
-      #     sentry-cli releases set-commits ${{ env.RELEASE_VERSION }} --commit 'ArchGPT/insomnium@${{ env.RELEASE_BRANCH }}'
+      #     sentry-cli releases set-commits ${{ env.RELEASE_VERSION }} --commit 'ArchGPT/restpie@${{ env.RELEASE_BRANCH }}'
 
       #     sentry-cli sourcemaps upload -r ${{ env.RELEASE_VERSION }} ./artifacts/*-latest-sentry
 

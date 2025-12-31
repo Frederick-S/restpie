@@ -211,7 +211,7 @@ export class ImportPostman {
     return '';
   };
 
-  importBody = (body: Body, contentType? : string): ImportRequest['body'] => {
+  importBody = (body: Body, contentType?: string): ImportRequest['body'] => {
     if (!body) {
       return {};
     }
@@ -699,7 +699,7 @@ export class ImportPostman {
       type: 'apikey',
       key: this.findValueByKey(apikey, 'key'),
       value: this.findValueByKey(apikey, 'value'),
-      addTo: this.findValueByKey(apikey, 'in')  === 'query' ? 'queryParams' : 'header',
+      addTo: this.findValueByKey(apikey, 'in') === 'query' ? 'queryParams' : 'header',
       disabled: false,
     };
   };
