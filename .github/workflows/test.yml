@@ -58,12 +58,12 @@ jobs:
         run: npm run type-check
 
       - name: Test Insomnium
-        working-directory: packages/insomnia
+        working-directory: packages/restpie
         run: npm test
         if: always() # Run this even if the previous step already failed the run
 
       - name: Test Insomnium Testing
-        working-directory: packages/insomnia-testing
+        working-directory: packages/restpie-testing
         run: npm test
         if: always() # Run this even if the previous step already failed the run
 

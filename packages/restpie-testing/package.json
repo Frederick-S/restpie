@@ -1,0 +1,25 @@
+{
+  "private": true,
+  "name": "restpie-testing",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "author": "Archy <archy@archgpt.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArchGPT/restpie.git",
+    "directory": "packages/restpie-testing"
+  },
+  "bugs": {
+    "url": "https://github.com/ArchGPT/restpie/issues"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint . --ext .js,.ts,.tsx --cache",
+    "test": "jest",
+    "build": "tsc --build tsconfig.build.json",
+    "watch": "npm run build -- --watch"
+  },
+  "homepage": "https://github.com/ArchGPT/restpie#readme",
+  "description": ""
+}
