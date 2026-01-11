@@ -21,6 +21,10 @@ Due to another related project, this repo is no longer being actively maintained
 
 I have removed user login, tracking, analytics, etc, from Insomnia so it is now a 100% local app. (And runs faster!)
 
+## New Features
+
+- **Comment support in request body** - Toggle line comments with Cmd+/ (Mac) or Ctrl+/ (Windows/Linux). Comments are preserved in the editor but automatically stripped before sending requests.
+- **Sidebar request name tooltips** - Hover over truncated request names to see the full name.
 
 ## Download
 
