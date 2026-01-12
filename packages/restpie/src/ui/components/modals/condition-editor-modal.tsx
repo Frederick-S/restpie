@@ -68,24 +68,26 @@ export const ConditionEditorModal = forwardRef<ConditionEditorModalHandle, Modal
         </p>
       </ModalBody>
       <ModalFooter>
-        <button
-          className="btn btn--super-compact"
-          onClick={() => {
-            onClear();
-            modalRef.current?.hide();
-          }}
-        >
-          Clear Condition
-        </button>
-        <button
-          className="btn"
-          onClick={() => {
-            onSave(value);
-            modalRef.current?.hide();
-          }}
-        >
-          Save
-        </button>
+        <div>
+          <button
+            className="btn"
+            onClick={() => {
+              onClear();
+              modalRef.current?.hide();
+            }}
+          >
+            Clear Condition
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              onSave(value);
+              modalRef.current?.hide();
+            }}
+          >
+            Save
+          </button>
+        </div>
       </ModalFooter>
     </Modal>
   );
