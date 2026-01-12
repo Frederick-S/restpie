@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { useAsync } from 'react-use';
 import styled from 'styled-components';
 
+import { evaluateCondition } from '../../common/render';
 import { Request } from '../../models/request';
 import { WebSocketRequest } from '../../models/websocket-request';
 import { addSegValuesToUrl, buildQueryStringFromParams, joinUrlAndQueryString, smartEncodeUrl } from '../../utils/url/querystring';
@@ -35,11 +36,22 @@ const defaultPreview = '...';
 
 export const RenderedQueryString: FC<Props> = ({ request }) => {
   const [previewString, setPreviewString] = useState(defaultPreview);
-  const { handleRender } = useNunjucks();
+  const { handleRender, handleGetRenderContext } = useNunjucks();
 
   useAsync(async () => {
-    const enabledParameters = request.parameters.filter(({ disabled }) => !disabled);
-    const enabledSeg = request.segmentParams.filter(({ disabled }) => !disabled);
+    // Get render context to evaluate enabledWhen conditions
+    const { context } = await handleGetRenderContext();
+    
+    // Filter parameters: include if (no enabledWhen and not disabled) OR (enabledWhen evaluates to true)
+    const shouldInclude = (p: { disabled?: boolean; enabledWhen?: string }) => {
+      if (p.enabledWhen) {
+        return evaluateCondition(p.enabledWhen, context);
+      }
+      return !p.disabled;
+    };
+    
+    const enabledParameters = request.parameters.filter(shouldInclude);
+    const enabledSeg = request.segmentParams.filter(shouldInclude);
     try {
       const result = await handleRender({
         url: request.url,

@@ -7,6 +7,7 @@ import { AddKeyCombinationModal } from '../components/modals/add-key-combination
 import { AlertModal } from '../components/modals/alert-modal';
 import { AskModal } from '../components/modals/ask-modal';
 import { CodePromptModal } from '../components/modals/code-prompt-modal';
+import { ConditionEditorModal } from '../components/modals/condition-editor-modal';
 import { EnvironmentEditModal } from '../components/modals/environment-edit-modal';
 import { ErrorModal } from '../components/modals/error-modal';
 import { FilterHelpModal } from '../components/modals/filter-help-modal';
@@ -55,6 +56,9 @@ const Modals: FC = () => {
 
         <CodePromptModal
           ref={instance => registerModal(instance, 'CodePromptModal')}
+        />
+        <ConditionEditorModal
+          ref={instance => registerModal(instance, 'ConditionEditorModal')}
         />
 
         {activeWorkspace ? (
