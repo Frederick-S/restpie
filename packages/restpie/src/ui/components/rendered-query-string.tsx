@@ -41,7 +41,7 @@ export const RenderedQueryString: FC<Props> = ({ request }) => {
   useAsync(async () => {
     // Get render context to evaluate enabledWhen conditions
     const { context } = await handleGetRenderContext();
-    
+
     // Filter parameters: include if (no enabledWhen and not disabled) OR (enabledWhen evaluates to true)
     const shouldInclude = (p: { disabled?: boolean; enabledWhen?: string }) => {
       if (p.enabledWhen) {
@@ -49,7 +49,7 @@ export const RenderedQueryString: FC<Props> = ({ request }) => {
       }
       return !p.disabled;
     };
-    
+
     const enabledParameters = request.parameters.filter(shouldInclude);
     const enabledSeg = request.segmentParams.filter(shouldInclude);
     try {

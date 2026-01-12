@@ -534,7 +534,7 @@ export async function getRenderedRequestAndContext(
   const renderedCookieJar = renderResult._cookieJar;
   renderedRequest.description = await render(description, renderContext, null, KEEP_ON_ERROR);
   const suppressUserAgent = request.headers.some(h => h.name.toLowerCase() === 'user-agent' && h.disabled === true);
-  
+
   // Helper to check if a param/header should be included
   // - If enabledWhen is set: include when condition is TRUE
   // - Otherwise: include if not disabled
@@ -544,7 +544,7 @@ export async function getRenderedRequestAndContext(
     }
     return !p.disabled;
   };
-  
+
   // Filter to only include enabled params
   renderedRequest.parameters = renderedRequest.parameters.filter(p => shouldInclude(p));
   // Filter to only include enabled headers
