@@ -23,6 +23,7 @@ I have removed user login, tracking, analytics, etc, from Insomnia so it is now 
 
 ## New Features
 
+- **Conditional headers and query parameters** - Include or exclude headers and parameters based on JavaScript expressions evaluated against environment variables (e.g., `includeAuth === true`).
 - **Comment support in request body** - Toggle line comments with Cmd+/ (Mac) or Ctrl+/ (Windows/Linux). Comments are preserved in the editor but automatically stripped before sending requests.
 - **Sidebar request name tooltips** - Hover over truncated request names to see the full name.
 
