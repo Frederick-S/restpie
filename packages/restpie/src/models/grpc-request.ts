@@ -16,6 +16,7 @@ export interface GrpcRequestHeader {
   value: string;
   description?: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
 }
 
 interface BaseGrpcRequest {

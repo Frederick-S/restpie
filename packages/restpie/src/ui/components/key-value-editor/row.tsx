@@ -9,6 +9,7 @@ import { PromptButton } from '../base/prompt-button';
 import { OneLineEditor } from '../codemirror/one-line-editor';
 import { CodePromptModal } from '../modals/code-prompt-modal';
 import { showModal } from '../modals/index';
+import { ConditionEditorModal } from '../modals/condition-editor-modal';
 
 export interface Pair {
   id?: string;
@@ -18,6 +19,7 @@ export interface Pair {
   fileName?: string;
   type?: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
   multiline?: boolean | string;
 }
 
@@ -67,7 +69,8 @@ export const Row: FC<Props> = ({
 
   const classes = classnames(className, {
     'key-value-editor__row-wrapper': true,
-    'key-value-editor__row-wrapper--disabled': pair.disabled,
+    'key-value-editor__row-wrapper--disabled': pair.disabled && !pair.enabledWhen,
+    'key-value-editor__row-wrapper--conditional': !!pair.enabledWhen,
   });
 
   const isFileOrMultiline = allowMultiline || allowFile;
@@ -191,16 +194,61 @@ export const Row: FC<Props> = ({
         ) : null}
 
         {!hideButtons ? (
-          <button
-            onClick={() => onChange({ ...pair, disabled: !pair.disabled })}
-            title={pair.disabled ? 'Enable item' : 'Disable item'}
+          <Dropdown
+            aria-label='Inclusion Mode'
+            triggerButton={
+              <DropdownButton
+                className="tall"
+                title={
+                  pair.enabledWhen
+                    ? `Conditional: ${pair.enabledWhen}`
+                    : pair.disabled
+                    ? 'Disabled'
+                    : 'Enabled'
+                }
+              >
+                {pair.enabledWhen ? (
+                  <i className="fa fa-code" style={{ color: 'var(--color-warning)' }} />
+                ) : pair.disabled ? (
+                  <i className="fa fa-square-o" />
+                ) : (
+                  <i className="fa fa-check-square-o" />
+                )}
+                <i className="fa fa-caret-down space-left" style={{ fontSize: '0.7em' }} />
+              </DropdownButton>
+            }
           >
-            {pair.disabled ? (
-              <i className="fa fa-square-o" />
-            ) : (
-              <i className="fa fa-check-square-o" />
-            )}
-          </button>
+            <DropdownItem aria-label='Enabled'>
+              <ItemContent
+                icon="check-square-o"
+                label="Enabled"
+                onClick={() => onChange({ ...pair, disabled: false, enabledWhen: undefined })}
+              />
+            </DropdownItem>
+            <DropdownItem aria-label='Disabled'>
+              <ItemContent
+                icon="square-o"
+                label="Disabled"
+                onClick={() => onChange({ ...pair, disabled: true, enabledWhen: undefined })}
+              />
+            </DropdownItem>
+            <DropdownItem aria-label='Conditional'>
+              <ItemContent
+                icon="code"
+                label={pair.enabledWhen ? `Conditional: ${pair.enabledWhen.slice(0, 20)}${pair.enabledWhen.length > 20 ? '...' : ''}` : 'Conditional...'}
+                onClick={() => showModal(ConditionEditorModal, {
+                  title: `Include Condition for "${pair.name || 'item'}"`,
+                  defaultValue: pair.enabledWhen || '',
+                  onSave: (enabledWhen: string) => onChange({
+                    ...pair,
+                    disabled: false,
+                    enabledWhen: enabledWhen || undefined,
+                  }),
+                  onClear: () => onChange({ ...pair, disabled: false, enabledWhen: undefined }),
+                })}
+              />
+            </DropdownItem>
+          </Dropdown>
         ) : (
           <button>
             <i className="fa fa-empty" />
