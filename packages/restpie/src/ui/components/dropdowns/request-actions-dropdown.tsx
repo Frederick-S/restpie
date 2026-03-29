@@ -20,12 +20,15 @@ import { getRequestActions } from '../../../plugins';
 import * as pluginContexts from '../../../plugins/context/index';
 import { useRequestMetaPatcher, useRequestSetter } from '../../hooks/use-request';
 import { RootLoaderData } from '../../routes/root';
+import { WorkspaceLoaderData } from '../../routes/workspace';
 import { type DropdownProps } from '../base/dropdown';
 import { Icon } from '../icon';
 import { showError, showModal, showPrompt } from '../modals';
 import { AlertModal } from '../modals/alert-modal';
 import { GenerateCodeModal } from '../modals/generate-code-modal';
+import { MoveCollectionItemModal } from '../modals/move-collection-item-modal';
 import { RequestSettingsModal } from '../modals/request-settings-modal';
+import { calculateMoveMetaSortKey } from './move-collection-item';
 
 interface Props extends Omit<DropdownProps, 'children'> {
   activeEnvironment: Environment;
@@ -44,6 +47,11 @@ export const RequestActionsDropdown = ({
   const {
     settings,
   } = useRouteLoaderData('root') as RootLoaderData;
+  const {
+    activeWorkspace,
+    collection,
+    requestTree,
+  } = useRouteLoaderData(':workspaceId') as WorkspaceLoaderData;
   const patchRequestMeta = useRequestMetaPatcher();
   const patchRequest = useRequestSetter();
   const { hotKeyRegistry } = settings;
@@ -53,6 +61,7 @@ export const RequestActionsDropdown = ({
   const { organizationId, projectId, workspaceId } = useParams() as { organizationId: string; projectId: string; workspaceId: string };
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   const onOpen = useCallback(async () => {
     const actionPlugins = await getRequestActions();
@@ -136,6 +145,10 @@ export const RequestActionsDropdown = ({
     });
   };
 
+  const moveRequest = () => {
+    setIsMoveModalOpen(true);
+  };
+
   const togglePin = () => {
     patchRequestMeta(request._id, { pinned: !isPinned });
   };
@@ -189,6 +202,12 @@ export const RequestActionsDropdown = ({
         name: 'Rename',
         action: handleRename,
         icon: 'edit',
+      },
+      {
+        id: 'Move',
+        name: 'Move',
+        action: moveRequest,
+        icon: 'arrow-right',
       },
       {
         id: 'Delete',
@@ -258,6 +277,22 @@ export const RequestActionsDropdown = ({
       <RequestSettingsModal
         request={request}
         onHide={() => setIsSettingsModalOpen(false)}
+      />
+    )}
+    {isMoveModalOpen && (
+      <MoveCollectionItemModal
+        title="Move Request"
+        workspaceId={activeWorkspace._id}
+        workspaceName={activeWorkspace.name}
+        requestTree={requestTree}
+        currentParentId={request.parentId}
+        onMove={selectedParentValue => {
+          patchRequest(request._id, {
+            parentId: selectedParentValue,
+            metaSortKey: calculateMoveMetaSortKey(collection, selectedParentValue),
+          });
+        }}
+        onHide={() => setIsMoveModalOpen(false)}
       />
     )}
     </Fragment>

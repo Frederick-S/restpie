@@ -19,8 +19,10 @@ import { type DropdownHandle, type DropdownProps } from '../base/dropdown';
 import { Icon } from '../icon';
 import { showError, showModal, showPrompt } from '../modals';
 import { EnvironmentEditModal } from '../modals/environment-edit-modal';
+import { MoveCollectionItemModal } from '../modals/move-collection-item-modal';
 import { PasteCurlModal } from '../modals/paste-curl-modal';
 import { RequestGroupSettingsModal } from '../modals/request-group-settings-modal';
+import { calculateMoveMetaSortKey } from './move-collection-item';
 interface Props extends Partial<DropdownProps> {
   requestGroup: RequestGroup;
 }
@@ -30,6 +32,9 @@ export const RequestGroupActionsDropdown = ({
 }: Props) => {
   const {
     activeProject,
+    activeWorkspace,
+    collection,
+    requestTree,
   } = useRouteLoaderData(':workspaceId') as WorkspaceLoaderData;
   const {
     settings,
@@ -94,6 +99,10 @@ export const RequestGroupActionsDropdown = ({
       });
   };
 
+  const moveFolder = () => {
+    setIsMoveModalOpen(true);
+  };
+
   const handlePluginClick = async ({ label, plugin, action }: RequestGroupAction) => {
     setLoadingActions({ ...loadingActions, [label]: true });
 
@@ -128,6 +137,7 @@ export const RequestGroupActionsDropdown = ({
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPasteCurlModalOpen, setPasteCurlModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   const requestGroupActionItems: ({
     id: string;
@@ -228,6 +238,12 @@ export const RequestGroupActionsDropdown = ({
           handleRename(),
       },
       {
+        id: 'Move',
+        name: 'Move',
+        icon: 'arrow-right',
+        action: moveFolder,
+      },
+      {
         id: 'Delete',
         name: 'Delete',
         icon: 'trash',
@@ -291,6 +307,23 @@ export const RequestGroupActionsDropdown = ({
         onHide={() => setIsSettingsModalOpen(false)}
       />
     )}
+      {isMoveModalOpen && (
+        <MoveCollectionItemModal
+          title="Move Folder"
+          workspaceId={activeWorkspace._id}
+          workspaceName={activeWorkspace.name}
+          requestTree={requestTree}
+          currentParentId={requestGroup.parentId}
+          movingRequestGroupId={requestGroup._id}
+          onMove={selectedParentValue => {
+            patchGroup(requestGroup._id, {
+              parentId: selectedParentValue,
+              metaSortKey: calculateMoveMetaSortKey(collection, selectedParentValue),
+            });
+          }}
+          onHide={() => setIsMoveModalOpen(false)}
+        />
+      )}
       {isPasteCurlModalOpen && (
         <PasteCurlModal
           onImport={req => {
