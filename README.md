@@ -25,6 +25,7 @@ I have removed user login, tracking, analytics, etc, from Insomnia so it is now 
 
 - **Comment support in request body** - Toggle line comments with Cmd+/ (Mac) or Ctrl+/ (Windows/Linux). Comments are preserved in the editor but automatically stripped before sending requests.
 - **Sidebar request name tooltips** - Hover over truncated request names to see the full name.
+- **Move requests/folders with tree picker** - Use the new `Move` action in request and folder menus to open a folder-only tree dialog and quickly move items to another location.
 
 ## Download
 
