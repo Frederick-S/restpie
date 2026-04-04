@@ -734,4 +734,166 @@ describe('render tests', () => {
       );
     });
   });
+
+  describe('evaluateCondition()', () => {
+    it('returns false for empty expression', () => {
+      expect(renderUtils.evaluateCondition('', {})).toBe(false);
+    });
+
+    it('returns false for whitespace-only expression', () => {
+      expect(renderUtils.evaluateCondition('   ', {})).toBe(false);
+    });
+
+    it('returns false for undefined expression', () => {
+      expect(renderUtils.evaluateCondition(undefined, {})).toBe(false);
+    });
+
+    it('evaluates simple true literal', () => {
+      expect(renderUtils.evaluateCondition('true', {})).toBe(true);
+    });
+
+    it('evaluates simple false literal', () => {
+      expect(renderUtils.evaluateCondition('false', {})).toBe(false);
+    });
+
+    it('evaluates equality with context variable', () => {
+      expect(renderUtils.evaluateCondition("env === 'production'", { env: 'production' })).toBe(true);
+      expect(renderUtils.evaluateCondition("env === 'production'", { env: 'development' })).toBe(false);
+    });
+
+    it('evaluates inequality with context variable', () => {
+      expect(renderUtils.evaluateCondition("env !== 'production'", { env: 'development' })).toBe(true);
+      expect(renderUtils.evaluateCondition("env !== 'production'", { env: 'production' })).toBe(false);
+    });
+
+    it('returns false on ReferenceError for undefined variable', () => {
+      expect(renderUtils.evaluateCondition('undefinedVar === true', {})).toBe(false);
+    });
+
+    it('handles boolean context values', () => {
+      expect(renderUtils.evaluateCondition('debug === true', { debug: true })).toBe(true);
+      expect(renderUtils.evaluateCondition('debug === true', { debug: false })).toBe(false);
+    });
+
+    it('handles truthy check', () => {
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: true })).toBe(true);
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: 1 })).toBe(true);
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: 'yes' })).toBe(true);
+    });
+
+    it('handles falsy check', () => {
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: false })).toBe(false);
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: 0 })).toBe(false);
+      expect(renderUtils.evaluateCondition('includeAuth', { includeAuth: '' })).toBe(false);
+    });
+
+    it('handles negation', () => {
+      expect(renderUtils.evaluateCondition('!excludeAuth', { excludeAuth: false })).toBe(true);
+      expect(renderUtils.evaluateCondition('!excludeAuth', { excludeAuth: true })).toBe(false);
+    });
+
+    it('handles complex expressions with AND', () => {
+      expect(renderUtils.evaluateCondition("env === 'prod' && debug === false", { env: 'prod', debug: false })).toBe(true);
+      expect(renderUtils.evaluateCondition("env === 'prod' && debug === false", { env: 'prod', debug: true })).toBe(false);
+    });
+
+    it('handles complex expressions with OR', () => {
+      expect(renderUtils.evaluateCondition("env === 'prod' || env === 'staging'", { env: 'staging' })).toBe(true);
+      expect(renderUtils.evaluateCondition("env === 'prod' || env === 'staging'", { env: 'dev' })).toBe(false);
+    });
+
+    it('handles numeric comparisons', () => {
+      expect(renderUtils.evaluateCondition('version >= 2', { version: 3 })).toBe(true);
+      expect(renderUtils.evaluateCondition('version >= 2', { version: 1 })).toBe(false);
+    });
+
+    it('returns false for syntax errors', () => {
+      expect(renderUtils.evaluateCondition('invalid syntax {{', {})).toBe(false);
+    });
+  });
+
+  describe('shouldInclude filtering logic', () => {
+    // Helper that mimics the shouldInclude logic from render.ts
+    const shouldInclude = (
+      p: { name?: string; value?: string; disabled?: boolean; enabledWhen?: string },
+      context: Record<string, any>
+    ) => {
+      if (p.enabledWhen) {
+        return renderUtils.evaluateCondition(p.enabledWhen, context);
+      }
+      return !p.disabled;
+    };
+
+    describe('with enabledWhen condition', () => {
+      it('includes item when condition evaluates to true', () => {
+        const param = { name: 'test', value: 'val', enabledWhen: "env === 'prod'" };
+        expect(shouldInclude(param, { env: 'prod' })).toBe(true);
+      });
+
+      it('excludes item when condition evaluates to false', () => {
+        const param = { name: 'test', value: 'val', enabledWhen: "env === 'prod'" };
+        expect(shouldInclude(param, { env: 'dev' })).toBe(false);
+      });
+
+      it('excludes item when condition references undefined variable', () => {
+        const param = { name: 'test', value: 'val', enabledWhen: 'undefinedVar === true' };
+        expect(shouldInclude(param, {})).toBe(false);
+      });
+
+      it('enabledWhen takes precedence over disabled flag', () => {
+        // Even if disabled: true, enabledWhen condition should be evaluated
+        const param = { name: 'test', value: 'val', disabled: true, enabledWhen: 'true' };
+        expect(shouldInclude(param, {})).toBe(true);
+      });
+    });
+
+    describe('without enabledWhen (fallback to disabled)', () => {
+      it('includes item when disabled is false', () => {
+        const param = { name: 'test', value: 'val', disabled: false };
+        expect(shouldInclude(param, {})).toBe(true);
+      });
+
+      it('includes item when disabled is undefined', () => {
+        const param = { name: 'test', value: 'val' };
+        expect(shouldInclude(param, {})).toBe(true);
+      });
+
+      it('excludes item when disabled is true', () => {
+        const param = { name: 'test', value: 'val', disabled: true };
+        expect(shouldInclude(param, {})).toBe(false);
+      });
+    });
+
+    describe('filtering arrays', () => {
+      it('filters parameters based on enabledWhen conditions', () => {
+        const context = { env: 'prod', debug: true };
+        const params = [
+          { name: 'always', value: '1' },
+          { name: 'prodOnly', value: '2', enabledWhen: "env === 'prod'" },
+          { name: 'devOnly', value: '3', enabledWhen: "env === 'dev'" },
+          { name: 'debugMode', value: '4', enabledWhen: 'debug === true' },
+          { name: 'disabled', value: '5', disabled: true },
+        ];
+
+        const filtered = params.filter(p => shouldInclude(p, context));
+
+        expect(filtered).toHaveLength(3);
+        expect(filtered.map(p => p.name)).toEqual(['always', 'prodOnly', 'debugMode']);
+      });
+
+      it('filters headers based on enabledWhen conditions', () => {
+        const context = { includeAuth: true };
+        const headers = [
+          { name: 'Content-Type', value: 'application/json' },
+          { name: 'Authorization', value: 'Bearer token', enabledWhen: 'includeAuth' },
+          { name: 'X-Debug', value: 'true', enabledWhen: 'debugMode' },
+        ];
+
+        const filtered = headers.filter(h => shouldInclude(h, context));
+
+        expect(filtered).toHaveLength(2);
+        expect(filtered.map(h => h.name)).toEqual(['Content-Type', 'Authorization']);
+      });
+    });
+  });
 });

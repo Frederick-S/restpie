@@ -56,6 +56,28 @@ export type HandleGetRenderContext = () => Promise<RenderContextAndKeys>;
 
 export type HandleRender = <T>(object: T, contextCacheKey?: string | null) => Promise<T>;
 
+/**
+ * Evaluate a JavaScript expression against a context object to determine
+ * if a header/parameter should be included.
+ * @param expression - JavaScript expression string (e.g., "env === 'production'")
+ * @param context - The render context containing environment variables
+ * @returns true if the expression evaluates to truthy (meaning item should be included)
+ */
+export function evaluateCondition(
+  expression: string | undefined,
+  context: Record<string, any>
+): boolean {
+  if (!expression?.trim()) return false;
+  try {
+    // Create a safe function with context variables in scope
+    const fn = new Function(...Object.keys(context), `return (${expression})`);
+    return Boolean(fn(...Object.values(context)));
+  } catch (err) {
+    console.warn(`Failed to evaluate condition: ${expression}`, err);
+    return false;
+  }
+}
+
 export async function buildRenderContext(
   {
     ancestors,
@@ -512,14 +534,25 @@ export async function getRenderedRequestAndContext(
   const renderedCookieJar = renderResult._cookieJar;
   renderedRequest.description = await render(description, renderContext, null, KEEP_ON_ERROR);
   const suppressUserAgent = request.headers.some(h => h.name.toLowerCase() === 'user-agent' && h.disabled === true);
-  // Remove disabled params
-  renderedRequest.parameters = renderedRequest.parameters.filter(p => !p.disabled);
-  // Remove disabled headers
-  renderedRequest.headers = renderedRequest.headers.filter(p => !p.disabled);
 
-  // Remove disabled body params
+  // Helper to check if a param/header should be included
+  // - If enabledWhen is set: include when condition is TRUE
+  // - Otherwise: include if not disabled
+  const shouldInclude = (p: { disabled?: boolean; enabledWhen?: string }) => {
+    if (p.enabledWhen) {
+      return evaluateCondition(p.enabledWhen, renderContext);
+    }
+    return !p.disabled;
+  };
+
+  // Filter to only include enabled params
+  renderedRequest.parameters = renderedRequest.parameters.filter(p => shouldInclude(p));
+  // Filter to only include enabled headers
+  renderedRequest.headers = renderedRequest.headers.filter(p => shouldInclude(p));
+
+  // Filter body params
   if (renderedRequest.body && Array.isArray(renderedRequest.body.params)) {
-    renderedRequest.body.params = renderedRequest.body.params.filter(p => !p.disabled);
+    renderedRequest.body.params = renderedRequest.body.params.filter(p => shouldInclude(p));
   }
 
   // Remove disabled authentication

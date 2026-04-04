@@ -469,4 +469,38 @@ describe('export', () => {
       ]),
     });
   });
+
+  it('preserves enabledWhen field on headers and parameters during export', async () => {
+    const w = await models.workspace.create({ name: 'Workspace' });
+    const r = await models.request.create({
+      name: 'Request with conditions',
+      parentId: w._id,
+      headers: [
+        { name: 'X-Auth', value: 'token', enabledWhen: "env === 'production'" },
+        { name: 'X-Debug', value: 'true', enabledWhen: 'debug === true' },
+      ],
+      parameters: [
+        { name: 'verbose', value: '1', enabledWhen: 'debug' },
+      ],
+    });
+
+    const exportedJson = await exportWorkspacesData([w], false, 'json');
+    const exportedData = JSON.parse(exportedJson);
+
+    const exportedRequest = exportedData.resources.find(
+      (res: any) => res._id === r._id
+    );
+
+    expect(exportedRequest.headers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'X-Auth', enabledWhen: "env === 'production'" }),
+        expect.objectContaining({ name: 'X-Debug', enabledWhen: 'debug === true' }),
+      ])
+    );
+    expect(exportedRequest.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'verbose', enabledWhen: 'debug' }),
+      ])
+    );
+  });
 });

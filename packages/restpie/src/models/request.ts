@@ -61,12 +61,14 @@ export interface RequestHeader {
   value: string;
   description?: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
 }
 
 export interface RequestParameter {
   name: string;
   value: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
   id?: string;
   fileName?: string;
 }
@@ -75,6 +77,7 @@ export interface RequestSegment {
   name: string;
   value: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
   id?: string;
   fileName?: string;
 }
@@ -84,6 +87,7 @@ export interface RequestBodyParameter {
   value: string;
   description?: string;
   disabled?: boolean;
+  enabledWhen?: string;  // JS expression - include when TRUE
   multiline?: string;
   id?: string;
   fileName?: string;

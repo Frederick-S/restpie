@@ -29,12 +29,14 @@ export const SelectModal = forwardRef<SelectModalHandle, ModalProps>((_, ref) =>
     title: null,
     value: null,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useImperativeHandle(ref, () => ({
     hide: () => {
       modalRef.current?.hide();
     },
     show: options => {
+      setIsLoading(false);
       setState(options);
       modalRef.current?.show();
     },
@@ -59,12 +61,24 @@ export const SelectModal = forwardRef<SelectModalHandle, ModalProps>((_, ref) =>
       <ModalFooter>
         <button
           className="btn"
-          onClick={() => {
+          disabled={isLoading}
+          onClick={async () => {
+            if (onDone) {
+              setIsLoading(true);
+              try {
+                await onDone(value);
+              } finally {
+                setIsLoading(false);
+              }
+            }
             modalRef.current?.hide();
-            onDone?.(value);
           }}
         >
-          Done
+          {isLoading ? (
+            <><i className="fa fa-spinner fa-spin" /> Exporting...</>
+          ) : (
+            'Done'
+          )}
         </button>
       </ModalFooter>
     </Modal>
