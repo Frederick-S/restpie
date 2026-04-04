@@ -62,8 +62,17 @@ export const loader: LoaderFunction = async ({ params }): Promise<RequestLoaderD
   const activeWorkspaceMeta = await models.workspaceMeta.getByParentId(workspaceId);
 
   guard(activeWorkspaceMeta, 'Active workspace meta not found');
+  const existingOpenRequestIds = Array.isArray(activeWorkspaceMeta.openRequestIds)
+    ? activeWorkspaceMeta.openRequestIds
+    : [];
+  const nextOpenRequestIds = existingOpenRequestIds.includes(requestId)
+    ? existingOpenRequestIds
+    : [...existingOpenRequestIds, requestId];
   // NOTE: loaders shouldnt mutate data, this should be moved somewhere else
-  await models.workspaceMeta.update(activeWorkspaceMeta, { activeRequestId: requestId });
+  await models.workspaceMeta.update(activeWorkspaceMeta, {
+    activeRequestId: requestId,
+    openRequestIds: nextOpenRequestIds,
+  });
   if (isGrpcRequestId(requestId)) {
     return {
       activeRequest,
@@ -204,10 +213,15 @@ export const deleteRequestAction: ActionFunction = async ({ request, params }) =
   await requestOperations.remove(req);
   const workspaceMeta = await models.workspaceMeta.getByParentId(workspaceId);
   guard(workspaceMeta, 'Workspace meta not found');
+  const nextOpenRequestIds = (workspaceMeta.openRequestIds || []).filter(openRequestId => openRequestId !== id);
   if (workspaceMeta.activeRequestId === id) {
-    await models.workspaceMeta.updateByParentId(workspaceId, { activeRequestId: null });
+    await models.workspaceMeta.updateByParentId(workspaceId, {
+      activeRequestId: null,
+      openRequestIds: nextOpenRequestIds,
+    });
     return redirect(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug`);
   }
+  await models.workspaceMeta.updateByParentId(workspaceId, { openRequestIds: nextOpenRequestIds });
   return null;
 };
 
