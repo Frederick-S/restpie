@@ -16,6 +16,7 @@ export interface BaseWorkspaceMeta {
   activeActivity: string | null;
   activeEnvironmentId: string | null;
   activeRequestId: string | null;
+  openRequestIds: string[];
   activeUnitTestSuiteId: string | null;
   cachedGitLastAuthor: string | null;
   cachedGitLastCommitTime: number | null;
@@ -42,6 +43,7 @@ export function init(): BaseWorkspaceMeta {
     activeActivity: null,
     activeEnvironmentId: null,
     activeRequestId: null,
+    openRequestIds: [],
     activeUnitTestSuiteId: null,
     cachedGitLastAuthor: null,
     cachedGitLastCommitTime: null,
@@ -59,6 +61,9 @@ export function init(): BaseWorkspaceMeta {
 }
 
 export function migrate(doc: WorkspaceMeta) {
+  if (!Array.isArray(doc.openRequestIds)) {
+    doc.openRequestIds = [];
+  }
   return doc;
 }
 

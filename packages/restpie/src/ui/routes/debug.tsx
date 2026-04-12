@@ -1,7 +1,7 @@
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { ServiceError, StatusObject } from '@grpc/grpc-js';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import React, { FC, Fragment, useEffect, useRef, useState } from 'react';
+import React, { FC, Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   DropIndicator,
@@ -109,6 +109,11 @@ export interface GrpcRequestState {
   method?: GrpcMethodInfo;
 }
 
+const areIdListsEqual = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((id, index) => id === b[index]);
+
+const dedupeIds = (ids: string[]) => [...new Set(ids)];
+
 const INITIAL_GRPC_REQUEST_STATE: Omit<GrpcRequestState, "requestId"> = {
   running: false,
   requestMessages: [],
@@ -149,6 +154,7 @@ const EventStreamSpinner = ({ requestId }: { requestId: string }) => {
 export const Debug: FC = () => {
   const {
     activeWorkspace,
+    activeWorkspaceMeta,
     activeProject,
     activeEnvironment,
     activeCookieJar,
@@ -164,6 +170,7 @@ export const Debug: FC = () => {
     | undefined;
   const { activeRequest } = requestData || {};
   const requestFetcher = useFetcher();
+  const workspaceMetaFetcher = useFetcher();
 
   const [isPasteCurlModalOpen, setPasteCurlModalOpen] = useState(false);
   const [pastedCurl, setPastedCurl] = useState('');
@@ -411,13 +418,124 @@ export const Debug: FC = () => {
   const reorderFetcher = useFetcher();
 
   const navigate = useNavigate();
+  const debugPath = `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug`;
+  const pathWithSearch = (path: string) => {
+    const query = searchParams.toString();
+    return query ? `${path}?${query}` : path;
+  };
+  const navigateToRequest = (id: string) => {
+    navigate(pathWithSearch(`${debugPath}/request/${id}`));
+  };
+
+  const requestsById = useMemo(() => {
+    return new Map(
+      collection
+        .filter(item => !isRequestGroup(item.doc))
+        .map(item => [item.doc._id, item.doc]),
+    );
+  }, [collection]);
+  const initialOpenRequestIds = useMemo(
+    () =>
+      dedupeIds(
+        Array.isArray(activeWorkspaceMeta.openRequestIds)
+          ? activeWorkspaceMeta.openRequestIds
+          : [],
+      ),
+    [activeWorkspaceMeta.openRequestIds],
+  );
+  const [openRequestIds, setOpenRequestIds] = useState<string[]>(initialOpenRequestIds);
+
+  useEffect(() => {
+    setOpenRequestIds(initialOpenRequestIds);
+  }, [initialOpenRequestIds, workspaceId]);
+
+  useEffect(() => {
+    if (!requestId) {
+      return;
+    }
+    setOpenRequestIds(current => {
+      const withCurrent = current.includes(requestId) ? current : [...current, requestId];
+      const filtered = withCurrent.filter(id => requestsById.has(id));
+      return areIdListsEqual(withCurrent, filtered) ? withCurrent : filtered;
+    });
+  }, [requestId, requestsById]);
+
+  const normalizedOpenRequestIds = useMemo(
+    () => openRequestIds.filter(id => requestsById.has(id)),
+    [openRequestIds, requestsById],
+  );
+  const openRequestTabs = useMemo(
+    () => normalizedOpenRequestIds.map(id => requestsById.get(id)).filter(Boolean),
+    [normalizedOpenRequestIds, requestsById],
+  );
+
+  const lastPersistedRef = useRef<string[]>(initialOpenRequestIds);
+  useEffect(() => {
+    lastPersistedRef.current = initialOpenRequestIds;
+  }, [initialOpenRequestIds]);
+
+  const updateMetaAction = `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/update-meta`;
+
+  useEffect(() => {
+    if (areIdListsEqual(normalizedOpenRequestIds, lastPersistedRef.current)) {
+      return;
+    }
+    lastPersistedRef.current = normalizedOpenRequestIds;
+    workspaceMetaFetcher.submit(
+      JSON.stringify({ openRequestIds: normalizedOpenRequestIds }),
+      { method: 'POST', encType: 'application/json', action: updateMetaAction },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedOpenRequestIds, updateMetaAction]);
+
+  useEffect(() => {
+    if (!areIdListsEqual(openRequestIds, normalizedOpenRequestIds)) {
+      setOpenRequestIds(normalizedOpenRequestIds);
+    }
+  }, [openRequestIds, normalizedOpenRequestIds]);
+
+  const closeRequestTab = (closedRequestId: string) => {
+    const closedIndex = normalizedOpenRequestIds.findIndex(id => id === closedRequestId);
+    const nextOpenRequestIds = normalizedOpenRequestIds.filter(id => id !== closedRequestId);
+    const closingActiveRequest = closedRequestId === requestId;
+    let nextActiveRequestId: string | null = null;
+
+    if (closingActiveRequest) {
+      nextActiveRequestId =
+        nextOpenRequestIds[closedIndex] ??
+        nextOpenRequestIds[closedIndex - 1] ??
+        null;
+    }
+
+    setOpenRequestIds(nextOpenRequestIds);
+
+    if (closingActiveRequest && nextActiveRequestId === null) {
+      workspaceMetaFetcher.submit(
+        JSON.stringify({ activeRequestId: null }),
+        { method: 'POST', encType: 'application/json', action: updateMetaAction },
+      );
+    }
+
+    if (closingActiveRequest) {
+      if (nextActiveRequestId) {
+        navigateToRequest(nextActiveRequestId);
+      } else {
+        navigate(pathWithSearch(debugPath));
+      }
+    }
+  };
 
   const collectionDragAndDrop = useDragAndDrop({
     getItems: keys =>
       [...keys].map(key => ({ 'text/plain': key.toString() })),
     onReorder(event) {
-      const id = event.keys.values().next().value.toString();
-      const targetId = event.target.key.toString();
+      const movingKey = event.keys.values().next().value;
+      const targetKey = event.target.key;
+      if (!movingKey || !targetKey) {
+        return;
+      }
+      const id = movingKey.toString();
+      const targetId = targetKey.toString();
 
       const dropItem = collection.find(r => r.doc._id === id);
       const targetItem = collection.find(r => r.doc._id === targetId);
@@ -858,9 +976,9 @@ export const Debug: FC = () => {
               onSelectionChange={keys => {
                 if (keys !== 'all') {
                   const value = keys.values().next().value;
-                  navigate(
-                    `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug/request/${value}?${searchParams.toString()}`
-                  );
+                  if (value) {
+                    navigateToRequest(value.toString());
+                  }
                 }
               }}
             >
@@ -923,16 +1041,18 @@ export const Debug: FC = () => {
                 onSelectionChange={keys => {
                   if (keys !== 'all') {
                     const value = keys.values().next().value;
+                    if (!value) {
+                      return;
+                    }
+                    const requestOrGroupId = value.toString();
 
                     const item = collection.find(
-                      item => item.doc._id === value
+                      item => item.doc._id === requestOrGroupId
                     );
                     if (item && isRequestGroup(item.doc)) {
-                      groupMetaPatcher(value, { collapsed: !item.collapsed });
+                      groupMetaPatcher(requestOrGroupId, { collapsed: !item.collapsed });
                     } else {
-                      navigate(
-                        `/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/debug/request/${value}?${searchParams.toString()}`
-                      );
+                      navigateToRequest(requestOrGroupId);
                     }
                   }
                 }}
@@ -1029,6 +1149,61 @@ export const Debug: FC = () => {
             />
           )}
         </div>
+      }
+      renderPaneHeader={
+        openRequestTabs.length > 0 ? (
+          <div
+            aria-label="Open Request Tabs"
+            data-testid="open-request-tabs"
+            className="flex overflow-x-auto border-b border-solid border-[--hl-md] bg-[--color-bg]"
+          >
+            {openRequestTabs.map(requestTab => {
+              if (!requestTab) {
+                return null;
+              }
+
+              const isActiveTab = requestTab._id === requestId;
+              return (
+                <div
+                  key={requestTab._id}
+                  className={`group flex h-[--line-height-sm] items-center border-r border-solid border-[--hl-md] ${isActiveTab ? 'bg-[--hl-xs] text-[--color-font]' : 'text-[--hl]'}`}
+                >
+                  <Button
+                    onPress={() => navigateToRequest(requestTab._id)}
+                    data-testid={`open-request-tab-${requestTab._id}`}
+                    className="flex h-full max-w-60 items-center gap-2 px-3 text-sm hover:bg-[--hl-xs]"
+                    aria-label={`Open request tab ${getRequestNameOrFallback(requestTab)}`}
+                  >
+                    {isRequest(requestTab) && (
+                      <span className={`w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center justify-center http-method-${requestTab.method}`}>
+                        {getMethodShortHand(requestTab)}
+                      </span>
+                    )}
+                    {isWebSocketRequest(requestTab) && (
+                      <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center info justify-center">
+                        WS
+                      </span>
+                    )}
+                    {isGrpcRequest(requestTab) && (
+                      <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center method-grpc justify-center">
+                        gRPC
+                      </span>
+                    )}
+                    <span className="truncate">{getRequestNameOrFallback(requestTab)}</span>
+                  </Button>
+                  <Button
+                    onPress={() => closeRequestTab(requestTab._id)}
+                    data-testid={`close-request-tab-${requestTab._id}`}
+                    aria-label={`Close request tab ${getRequestNameOrFallback(requestTab)}`}
+                    className="mr-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-sm text-[--hl] hover:bg-[--hl-sm] hover:text-[--color-font]"
+                  >
+                    <Icon icon="close" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        ) : undefined
       }
       renderPaneOne={
         workspaceId ? (

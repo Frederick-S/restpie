@@ -101,12 +101,37 @@ test.describe('Debug-Sidebar', async () => {
       await requestLocator.click();
     });
 
+    test('Open, switch, and close request tabs', async ({ page }) => {
+      const collection = page.getByLabel('Request Collection');
+      const openTabs = page.getByTestId('open-request-tabs');
+
+      const httpRequest = collection.getByRole('row', { name: 'example http' });
+      const grpcRequest = collection.getByRole('row', { name: 'example grpc' });
+      const websocketRequest = collection.getByRole('row', { name: 'example websocket' });
+
+      await httpRequest.click();
+      await grpcRequest.click();
+      await websocketRequest.click();
+
+      await expect(openTabs.locator('[data-testid^="open-request-tab-"]')).toHaveCount(3);
+
+      await page.getByLabel('Open request tab example http').click();
+      await expect(httpRequest).toHaveAttribute('aria-selected', 'true');
+
+      await page.getByLabel('Close request tab example http').click();
+      await expect(openTabs.locator('[data-testid^="open-request-tab-"]')).toHaveCount(2);
+      await expect(page.getByLabel('Open request tab example http')).toHaveCount(0);
+    });
+
     test('Delete Request', async ({ page }) => {
       const requestLocator = page.getByLabel('Request Collection').getByRole('row', { name: 'example http' });
       await requestLocator.click();
+      const openTabs = page.getByTestId('open-request-tabs');
+      await expect(openTabs.locator('[data-testid^="open-request-tab-"]')).toHaveCount(1);
       await requestLocator.getByLabel('Request Actions').click();
       await page.getByRole('menuitemradio', { name: 'Delete' }).click();
       await expect(page.locator('.app')).not.toContainText('example http');
+      await expect(page.getByLabel('Open request tab example http')).toHaveCount(0);
     });
 
     test('Rename a request', async ({ page }) => {
