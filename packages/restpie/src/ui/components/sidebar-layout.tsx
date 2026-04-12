@@ -56,6 +56,23 @@ const verticalStyles = {
       top: 'calc(var(--drag-width) / 2 * -1)',
     },
   },
+
+  '&.has-pane-header .sidebar': {
+    gridRowEnd: 'span 4',
+  },
+  '&.has-pane-header .pane-one': {
+    gridRowStart: '2',
+    gridRowEnd: 'span 3',
+  },
+  '&.has-pane-header .pane-one:has(~.pane-two)': {
+    gridRowEnd: 'span 1',
+  },
+  '&.has-pane-header .pane-two': {
+    gridRowStart: '4',
+  },
+  '&.has-pane-header .drag--pane-vertical': {
+    gridRowStart: '3',
+  },
 };
 
 const LayoutGrid = styled.div<{orientation: 'vertical' | 'horizontal'}>(props => ({
@@ -151,6 +168,30 @@ const LayoutGrid = styled.div<{orientation: 'vertical' | 'horizontal'}>(props =>
     gridRowEnd: 'span 3',
   },
 
+  '.pane-header': {
+    gridColumnStart: '4',
+    gridColumnEnd: 'span 3',
+    gridRowStart: '1',
+    borderLeft: '1px solid var(--hl-md)',
+    overflow: 'hidden',
+  },
+
+  '&.has-pane-header .sidebar': {
+    gridRowEnd: 'span 4',
+  },
+  '&.has-pane-header .drag': {
+    gridRowEnd: 'span 4',
+  },
+  '&.has-pane-header .pane-one': {
+    gridRowStart: '2',
+  },
+  '&.has-pane-header .pane-two': {
+    gridRowStart: '2',
+  },
+  '&.has-pane-header .migration': {
+    gridRowEnd: 'span 4',
+  },
+
   '.migration': {
     gridColumnStart: '1',
     gridColumnEnd: 'span 6',
@@ -192,12 +233,14 @@ export const SidebarFooter = styled.div({
 
 interface Props {
   renderPageSidebar?: ReactNode;
+  renderPaneHeader?: ReactNode;
   renderPaneOne?: ReactNode;
   renderPaneTwo?: ReactNode;
   className?: string;
 }
 
 export const SidebarLayout: FC<Props> = ({
+  renderPaneHeader,
   renderPaneOne,
   renderPaneTwo,
   renderPageSidebar,
@@ -360,9 +403,10 @@ export const SidebarLayout: FC<Props> = ({
   }, []);
 
   const realSidebarWidth = activeWorkspaceMeta?.sidebarHidden ? 0 : sidebarWidth;
-  const gridRows = renderPaneTwo
+  const baseGridRows = renderPaneTwo
     ? `minmax(0, ${paneHeight}fr) 0 minmax(0, ${1 - paneHeight}fr)`
     : '1fr';
+  const gridRows = renderPaneHeader ? `auto ${baseGridRows}` : baseGridRows;
   const gridColumns =
     `auto ${realSidebarWidth}rem 0 ` +
     `${renderPaneTwo ? `minmax(0, ${paneWidth}fr) 0 minmax(0, ${1 - paneWidth}fr)` : '1fr'}`;
@@ -371,7 +415,7 @@ export const SidebarLayout: FC<Props> = ({
     <LayoutGrid
       key="wrapper"
       id="wrapper"
-      className={className}
+      className={`${className || ''} ${renderPaneHeader ? 'has-pane-header' : ''}`.trim() || undefined}
       orientation={forceVerticalLayout ? 'vertical' : 'horizontal'}
       style={{
         gridTemplateColumns: gridColumns,
@@ -395,6 +439,11 @@ export const SidebarLayout: FC<Props> = ({
             />
           </div>
         </ErrorBoundary>
+      )}
+      {renderPaneHeader && (
+        <div className="pane-header">
+          {renderPaneHeader}
+        </div>
       )}
       {renderPaneOne && (
         <ErrorBoundary showAlert>

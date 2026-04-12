@@ -1150,95 +1150,92 @@ export const Debug: FC = () => {
           )}
         </div>
       }
+      renderPaneHeader={
+        openRequestTabs.length > 0 ? (
+          <div
+            aria-label="Open Request Tabs"
+            data-testid="open-request-tabs"
+            className="flex overflow-x-auto border-b border-solid border-[--hl-md] bg-[--color-bg]"
+          >
+            {openRequestTabs.map(requestTab => {
+              if (!requestTab) {
+                return null;
+              }
+
+              const isActiveTab = requestTab._id === requestId;
+              return (
+                <div
+                  key={requestTab._id}
+                  className={`group flex h-[--line-height-sm] items-center border-r border-solid border-[--hl-md] ${isActiveTab ? 'bg-[--hl-xs] text-[--color-font]' : 'text-[--hl]'}`}
+                >
+                  <Button
+                    onPress={() => navigateToRequest(requestTab._id)}
+                    data-testid={`open-request-tab-${requestTab._id}`}
+                    className="flex h-full max-w-60 items-center gap-2 px-3 text-sm hover:bg-[--hl-xs]"
+                    aria-label={`Open request tab ${getRequestNameOrFallback(requestTab)}`}
+                  >
+                    {isRequest(requestTab) && (
+                      <span className={`w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center justify-center http-method-${requestTab.method}`}>
+                        {getMethodShortHand(requestTab)}
+                      </span>
+                    )}
+                    {isWebSocketRequest(requestTab) && (
+                      <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center info justify-center">
+                        WS
+                      </span>
+                    )}
+                    {isGrpcRequest(requestTab) && (
+                      <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center method-grpc justify-center">
+                        gRPC
+                      </span>
+                    )}
+                    <span className="truncate">{getRequestNameOrFallback(requestTab)}</span>
+                  </Button>
+                  <Button
+                    onPress={() => closeRequestTab(requestTab._id)}
+                    data-testid={`close-request-tab-${requestTab._id}`}
+                    aria-label={`Close request tab ${getRequestNameOrFallback(requestTab)}`}
+                    className="mr-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-sm text-[--hl] hover:bg-[--hl-sm] hover:text-[--color-font]"
+                  >
+                    <Icon icon="close" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        ) : undefined
+      }
       renderPaneOne={
         workspaceId ? (
           <ErrorBoundary showAlert>
-            <div className="flex h-full min-h-0 flex-col">
-              {openRequestTabs.length > 0 && (
-                <div
-                  aria-label="Open Request Tabs"
-                  data-testid="open-request-tabs"
-                  className="flex overflow-x-auto border-b border-solid border-[--hl-md] bg-[--color-bg]"
-                >
-                  {openRequestTabs.map(requestTab => {
-                    if (!requestTab) {
-                      return null;
-                    }
-
-                    const isActiveTab = requestTab._id === requestId;
-                    return (
-                      <div
-                        key={requestTab._id}
-                        className={`group flex h-[--line-height-sm] items-center border-r border-solid border-[--hl-md] ${isActiveTab ? 'bg-[--hl-xs] text-[--color-font]' : 'text-[--hl]'}`}
-                      >
-                        <Button
-                          onPress={() => navigateToRequest(requestTab._id)}
-                          data-testid={`open-request-tab-${requestTab._id}`}
-                          className="flex h-full max-w-60 items-center gap-2 px-3 text-sm hover:bg-[--hl-xs]"
-                          aria-label={`Open request tab ${getRequestNameOrFallback(requestTab)}`}
-                        >
-                          {isRequest(requestTab) && (
-                            <span className={`w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center justify-center http-method-${requestTab.method}`}>
-                              {getMethodShortHand(requestTab)}
-                            </span>
-                          )}
-                          {isWebSocketRequest(requestTab) && (
-                            <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center info justify-center">
-                              WS
-                            </span>
-                          )}
-                          {isGrpcRequest(requestTab) && (
-                            <span className="w-10 flex-shrink-0 flex text-[0.65rem] rounded-sm border border-solid border-[--hl-sm] items-center method-grpc justify-center">
-                              gRPC
-                            </span>
-                          )}
-                          <span className="truncate">{getRequestNameOrFallback(requestTab)}</span>
-                        </Button>
-                        <Button
-                          onPress={() => closeRequestTab(requestTab._id)}
-                          data-testid={`close-request-tab-${requestTab._id}`}
-                          aria-label={`Close request tab ${getRequestNameOrFallback(requestTab)}`}
-                          className="mr-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-sm text-[--hl] hover:bg-[--hl-sm] hover:text-[--color-font]"
-                        >
-                          <Icon icon="close" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="min-h-0 flex-1">
-                {isGrpcRequestId(requestId) && grpcState && (
-                  <GrpcRequestPane
-                    grpcState={grpcState}
-                    setGrpcState={setGrpcState}
-                    reloadRequests={reloadRequests}
-                  />
-                )}
-                {isWebSocketRequestId(requestId) && (
-                  <WebSocketRequestPane environment={activeEnvironment} />
-                )}
-                {isRequestId(requestId) && (
-                  <RequestPane
-                    environmentId={activeEnvironment ? activeEnvironment._id : ''}
-                    settings={settings}
-                    setLoading={setLoading}
-                    onPaste={text => {
-                      setPastedCurl(text);
-                      setPasteCurlModalOpen(true);
-                    }}
-                  />
-                )}
-                {!requestId && <PlaceholderRequestPane />}
-                {isRequestSettingsModalOpen && activeRequest && (
-                  <RequestSettingsModal
-                    request={activeRequest}
-                    onHide={() => setIsRequestSettingsModalOpen(false)}
-                  />
-                )}
-              </div>
-            </div>
+            {isGrpcRequestId(requestId) && grpcState && (
+              <GrpcRequestPane
+                grpcState={grpcState}
+                setGrpcState={setGrpcState}
+                reloadRequests={reloadRequests}
+              />
+            )}
+            {isWebSocketRequestId(requestId) && (
+              <WebSocketRequestPane environment={activeEnvironment} />
+            )}
+            {isRequestId(requestId) && (
+              <RequestPane
+                environmentId={activeEnvironment ? activeEnvironment._id : ''}
+                settings={settings}
+                setLoading={setLoading}
+                onPaste={text => {
+                  setPastedCurl(text);
+                  setPasteCurlModalOpen(true);
+                }}
+              />
+            )}
+            {!requestId && <PlaceholderRequestPane />}
+            {isRequestSettingsModalOpen && activeRequest && (
+              <RequestSettingsModal
+                request={activeRequest}
+                onHide={() => setIsRequestSettingsModalOpen(false)}
+              />
+            )}
           </ErrorBoundary>
         ) : null
       }
